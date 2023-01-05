@@ -1,5 +1,6 @@
 ---
-title: "blog_project"
+title: "DataQ Blog"
+subtitle: "Building end-to-end data solutions"
 listing:
   contents: posts
   sort: "date desc"
