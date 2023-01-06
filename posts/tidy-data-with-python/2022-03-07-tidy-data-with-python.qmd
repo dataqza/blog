@@ -1,0 +1,223 @@
+---
+title: "Post With Code"
+subtitle: "A top-down approach on how to ‘Marie Kondo’ your data sets"
+author: "Jen Godlonton"
+date: "2023-01-06"
+categories: [python, data analysis]
+image: "tidy_data_with_python/tidy_data_visual.png"
+---
+
+A top-down approach on how to ‘Marie Kondo’ your data sets into Hadley Wickham's definition of tidy data by introducing pandas and using it’s functionality to introduce Python. 
+
+> “Tidy datasets and tidy tools work hand in hand to make data analysis easier, allowing you to focus on the interesting domain problem, not on the uninteresting logistics of data.”
+> - Hadley Wickham, Fellow of the American Statistical Association </blockquote>
+
+Marie Kondo famously asks us to clean our homes/spaces, discarding things that do not bring us joy and treasuring things that do. Hadley Wickham’s papers shows us how to translate that philosophy into messy datasets, and create ones that instead of bringing panic, bring joy. Tidy data has become the standard format for science and business because it allows people to easily turn a data table into graphs, analysis and insight. 
+
+The purpose of this repository is to help users coming from Excel, to create tidy data sets using Pandas by working through examples that deal with various messy datasets used in Wickham’s paper. Through the process of reading messy data, processing into tidy data and then performing basic analysis, it will also help with general better practice for data management. 
+
+The big advantage of Tidy Data is that it makes a clear distinction between a variable, an observation and a value. In this way, all data is standardised which makes it easier to collaborate on. Whether thinking about collaborators as your current colleagues, your future self, or future peers, organising and sharing data in a consistent and predictable way means less adjustment, time, and effort for all. 
+
+## The Pros and Cons of Tidy Data
+
+If you’ve read this far and are sitting there questioning why you would want a long table instead of a wide excel table where all column headers can be seen, well, the short answer is that not all data needs to be tidy. As Marie Kondo says, “If it sparks joy, keep it with confidence”. Both tidy and messy data are useful. Choose the format that makes analysis easier. Tidy data is simply another tool to keep sharp, so that when it is needed, you can put it to good use. 
+
+
+| Advantages of Tidy Data | Advantages of Messy Data|
+| --- | --- |
+| Because tidy data is a standard way of structuring a dataset, it is easy for an analyst or a computer to extract needed variables. | Efficient storage for completely crossed designs which can lead to efficient computation if desired operations can be expressed as matric operations.|
+| Many analysis operations, including all aggregation functions, involve all of the values in a variable. | Presentation|
+|  | Easier data capturing|
+
+### What is Tidy Data?
+
+According to Wickham, in a tidy data set, every column is a variable, every row is an observation and every cell is a single value.
+
+![](tidy_data_with_python/2022-02-18-14-20-35.png)
+
+Messy datasets, by extension, violate these 3 rules in some way. The five most common problems are:
+
+1.  Column headers are values, not variable names. 
+2.  Multiple variables are stored in one column.  
+3.  Variables are stored in both rows and columns. 
+4.  Multiple types of observational units are stored in the same table. 
+5.  A single observational unit is stored in multiple tables.
+ 
+ 
+Essentially, we want to take a wide dataset and transform it into a long one. Consider the following table.
+ 
+ 
+| Name | Treatment A | Treatment B |
+| --- | --- | --- |
+| John Smith |  - | 2 | 
+| Jane Doe | 16 | 11 |
+| Mary Johnson | 3 | 1 | 
+ 
+The information has been presented in a common way, however, it could be reorganised making the value, variables and observation more clear, as seen below. 
+
+| Name | Treatment | Value |
+| --- | --- | --- |
+| John Smith |  A | - | 
+| John Smith |  B | 2 | 
+| Jane Doe | A | 16 |
+| Jane Doe | B | 11 |
+| Mary Johnson | A | 3 | 
+| Mary Johnson | B | 1 |
+ 
+## 'Cleaning' tools
+ 
+The ‘cleaning’ tools we use to deal with these violations are:
+- Melting/Unpivoting (changing columns into rows)
+- Casting/Unstack (changing rows to columns)
+- String manipulation
+- Splitting
+- Regular expressions
+ 
+### Melting 
+
+`pandas.melt()` unpivots a DataFrame from wide format to long format. 
+
+```{python}
+# importing pandas as pd
+import pandas as pd
+  
+# creating a dataframe
+df = pd.DataFrame({'Name': {0: 'Jennifer', 1: 'Susan', 2: 'Tami'},
+                   'Course': {0: 'Honours', 1: 'Doctorate', 2: 'Graduate'},
+                   'Age': {0: 35, 1: 41, 2: 32}})
+df
+```
+
+```{python}
+# Name is id_vars and Course is value_vars
+pd.melt(df, id_vars =['Name'], value_vars =['Course'])
+```
+
+### Unstacking
+
+`pandas.unstack()` is a function that pivots the level of the indexed columns in a stacked dataframe. A stacked dataframe is usually a result of an aggregated groupby function in pandas. `stack()` sets the columns to a new level of hierarchy whereas `unstack()` pivots the indexed column.
+
+```{python}
+# import the python pandas package
+import pandas as pd
+ 
+# create a sample dataframe
+df = pd.DataFrame({"cars": ["VW", "VW", "Renault", "Renault"],
+                     "sales_jan": [20, 22, 24, 26],
+                     "sales_feb": [11, 13, 15, 17]},
+                    columns=["cars", "sales_jan",
+                             'sales_feb'])
+df
+
+# aggregate the car sales data by sum min
+# and max sales of two quarters as shown
+grouped_df = df.groupby('cars').agg(
+    {"sales_jan": [sum, max],
+     "sales_feb": [sum, min]})
+
+grouped_df
+```
+
+```{python}
+# Unstacking the grouped dataframe
+grouped_df.unstack()
+```
+
+### String Manipulation
+String manipulation is the process of changing, parsing, splicing, pasting, or analyzing strings. Sometimes, data in the string is not suitable for manipulating the analysis or get a description of the data. 
+
+There are many applications of string manipulation, below is a quick example of how to change the data type to string.
+
+```{python}
+# Importing the necessary libraries
+import pandas as pd
+import numpy as np
+  
+# Creating a df
+df = pd.Series(['Amanda', 'Bob', 'Claire', 'Devon', 'Evan', np.nan, 'Fred'])
+df
+
+# %%
+# We can change the dtype after creation of dataframe
+df.astype('string')
+```
+
+### Splitting
+
+Splitting is as the name suggests, it gives us power to split a data frame depending on the desired outcome.  
+There are many applications of splitting (splitting by rows, splitting a df into smaller df's...), below is a quick example of splitting a text column into 2 columns.
+
+```{python}
+# import Pandas as pd
+import pandas as pd
+
+# create a new data frame
+df = pd.DataFrame({'Name': ['Peter Parker', 'Bruce Wayne', 'Clark Kent'],
+				'Age':[32, 34, 36]})
+
+df
+```
+
+```{python}
+# Adding 2 new columns by splitting up Name
+# by default splitting is done on the basis of single space.
+# Naming new columns First and Last
+df[['First','Last']] = df.Name.str.split(expand=True)
+df
+```
+
+```{python}
+df.Name.apply(lambda x: pd.Series(str(x).split()))
+```
+
+### Regular Expressions
+
+Regular expressions (regex) are essentially text patterns that you can use to automate searching through and replacing elements within strings of text. This can make cleaning and working with text-based data sets much easier, saving you the trouble of having to search through mountains of text by hand.
+
+```{python}
+df = pd.DataFrame(
+	{
+		'City':['New York (City)', 'Parague', 'New Delhi (Delhi)', 'Venice', 'new Orleans'],
+        'Event':['Music', 'Poetry', 'Theatre', 'Comedy', 'Tech_Summit'],
+        'Cost':[10000, 5000, 15000, 2000, 12000]
+	}
+)
+  
+df
+```
+
+```{python}
+# Importing re package for using regular expressions
+import re
+
+# Function to clean the names
+def Clean_names(City_name):
+	# Search for opening bracket in the name followed by
+	# any characters repeated any number of times
+	if re.search('\(.*', City_name):
+
+		# Extract the position of beginning of pattern
+		pos = re.search('\(.*', City_name).start()
+
+		# return the cleaned name
+		return City_name[:pos]
+
+	else:
+		# if clean up needed return the same name
+		return City_name
+		
+# Updated the city columns
+df['City'] = df['City'].apply(Clean_names)
+
+# Print the updated dataframe
+df
+```
+
+## Where to go from here
+- Download the repo
+- Read through Hadley Wickham’s paper on Tidy data. While this post has summarized some of the paper, going through the examples will help you hugely when working through the exercises. 
+- Go through ‘README’ carefully and use the extra resources on pandas as needed.
+- Exercises 1 through to 4b, gradually provide you with less and less scaffolding, work in each notebook to try and create tidy data sets. To check your answers, use the solutions file. 
+- Have fun bringing joy to your data sets! 
+
+
