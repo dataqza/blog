@@ -2,18 +2,14 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://dataqza.github.io/blog/about.html</loc>
-    <lastmod>2023-01-05T19:18:44.436Z</lastmod>
+    <lastmod>2023-01-06T06:09:39.989Z</lastmod>
   </url>
   <url>
-    <loc>https://dataqza.github.io/blog/posts/welcome/index.html</loc>
-    <lastmod>2023-01-05T19:18:44.844Z</lastmod>
-  </url>
-  <url>
-    <loc>https://dataqza.github.io/blog/posts/post-with-code/index.html</loc>
-    <lastmod>2023-01-05T19:18:45.208Z</lastmod>
+    <loc>https://dataqza.github.io/blog/posts/tidy-data-with-python/2022-03-07-tidy-data-with-python.html</loc>
+    <lastmod>2023-01-06T06:09:44.309Z</lastmod>
   </url>
   <url>
     <loc>https://dataqza.github.io/blog/index.html</loc>
-    <lastmod>2023-01-05T19:18:45.648Z</lastmod>
+    <lastmod>2023-01-06T06:09:44.733Z</lastmod>
   </url>
 </urlset>
