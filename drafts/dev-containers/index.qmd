@@ -1,0 +1,22 @@
+---
+title: "Dev containers"
+subtitle: "Standardized and repeatable developer environments without installs dependencies locally"
+author: "Duncan Fraser"
+date: "2023-01-07"
+categories: [Setup, Docker]
+image: "guillaume-bolduc-uBe2mknURG4-unsplash.jpg" # Photo by <a href="https://unsplash.com/@guibolduc?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Guillaume Bolduc</a>
+---
+
+- What problem are we trying to solve?
+    - Don't want to install dependencies (effort, version clashes)
+    - Switch between multiple envs
+    - Dev env match Prod env
+    - Standardized, team has same env
+    - Don't know exactly what dependencies are needed, Documents dependencies
+- Explication of Docker, images and containers
+- Developing with containers
+- Developing inside containers
+- [Developing with container while inside a container](https://code.visualstudio.com/remote/advancedcontainers/use-docker-kubernetes)
+
+
+  

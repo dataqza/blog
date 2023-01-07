@@ -1,0 +1,11 @@
+{
+  "name": "Blog dev env",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["quarto.quarto", "streetsidesoftware.code-spell-checker"]
+    }
+  }
+}
