@@ -1,0 +1,11 @@
+{
+  "hash": "fe32de7882c612c0e9597b9807ff63e9",
+  "result": {
+    "markdown": "---\ntitle: \"Configuration for Python Data Projects\"\nsubtitle: \"Using Pydantic's BaseSettings\"\nauthor: \"Ian Rogers\"\ndate: \"2023-01-07\"\ncategories: [Python, Data Analytics, Snippets]\n---\n\n- Scenarios: development, production, notebooks\n- Single point to access to access with code completion of IDE\n\n\n```\nText\n```\n\n",
+    "supporting": [
+      "index_files"
+    ],
+    "filters": [],
+    "includes": {}
+  }
+}

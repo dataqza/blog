@@ -1,0 +1,81 @@
+---
+title: "Configuration for Python Data Projects"
+subtitle: "Using Pydantic's BaseSettings"
+author: "Ian Rogers"
+date: "2023-01-07"
+categories: [Python, Data Analytics, Snippets]
+---
+
+# Advantages
+
+- Scenarios: development, production, notebooks
+- Single point to access to access with code completion of IDE
+- Set at run time for example CLI
+- Env variables for deploy
+
+# Project structure
+
+```
+./
+├── notebooks/
+│   └── ilr_2023-01-07_notebook.py
+├── src/
+│   ├── services/
+│   ├── config.py
+│   └── __init__.py
+└── run.py
+
+```
+
+`src/config.py`
+
+```python
+import logging
+from enum import Enum
+from pathlib import Path
+
+from pydantic import BaseSettings, validator
+from sqlalchemy.engine import Engine
+from sqlalchemy import create_engine
+
+from src import PROJECT_DIR
+
+
+logger = logging.getLogger(__name__)
+configure_logging(logger)
+
+
+class Environment(str, Enum):
+    DEV = "dev"
+    PROD = "prod"
+
+
+class Settings(BaseSettings):
+
+    SQLALCHEMY_URI: str
+
+    _engine: Engine = None
+
+    @property
+    def engine(self) -> Engine:
+        if self._engine is None:
+            self._engine = get_engine(self.SQLALCHEMY_URI)
+        return self._engine
+
+    class Config:
+        env_file = PROJECT_DIR / ".env"
+        underscore_attrs_are_private = True
+```
+
+# CLI with Typer
+
+# dbt Run
+
+Prod and dev
+
+# Notebook
+
+```python
+```
+
+

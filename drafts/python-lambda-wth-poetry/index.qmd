@@ -1,0 +1,90 @@
+---
+title: "Lambda Zip Deployment with Poetry's Bundle Plugin"
+subtitle: "Using the Bundle to create a Python deployment packages"
+author: "Ian Rogers"
+date: "2023-05-05"
+categories: [Python, Serverless, AWS Lambda]
+---
+
+AWS Lambda can be used to build and run applications on AWS without having to manage servers. Instead, the developer publishes their code and configures triggers for when AWS should allocate machine resources to run that code. 
+
+If the code is larger than 3MB, or if your code has depencies that are not part of Python's standard libraries or AWS SDK libraries, you will need deploy your function using a deployment package. Lambda supports two types of deployment packages: container images and .zip file archives. 
+
+I was looking for a simple way to create .zip archives that integrates well with my development workflow in VSCode. Since I use Poetry to manage dependencies I was happy to find the Bundle plugin  that makes it easy to package the main dependencies for deployment. 
+
+I outline a minimal example below which you can find as a [GiLab repo](https://gitlab.com/dataqza/tooling/minimal-examples/lambda_zip_deployment).
+
+[Group by: split-apply-combine — pandas 2.0.1 documentation](https://pandas.pydata.org/docs/user_guide/groupby.html#named-aggregation)
+
+::: {.callout-tip}
+Zip file of dependencies can also be published to an AWS Lambda Layer which will be loaded when the function is invoked. Major advantages:
+
+- Reusability: One lambda layer can be used across many different AWS Lambda functions.
+- Using Lambda layers helps reduce deployment package size.
+:::
+
+# Requirements
+
+You will need the following installed on your workstation
+
+- AWS CLI with permission ti create and update Lambda functions
+- VSCode
+- Poetry
+- ARN for an AWS Role that gives your function permission to access AWS resources ([Using Lambda with the AWS CLI - AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-awscli.html)
+
+
+## Python project in VSCode
+
+The project has the following structure
+
+```txt
+./
+├── lambda_zip_deployment/
+│   ├── main.py
+│   └── transform.py
+├── tests/
+│   └── test_transform.py
+├── poetry.lock
+├── pyproject.toml
+└── README.md
+```
+
+Our poetry configuration includes some third-party libraries: pandas and pydantic as main dependecies, and pytest as a development dependency.
+
+```toml
+[tool.poetry]
+name = "lambda-zip-deployment"
+version = "0.1.0"
+description = ""
+authors = ["Ian <ian@dataq.co.za>"]
+readme = "README.md"
+packages = [{include = "lambda_zip_deployment"}]
+
+[tool.poetry.dependencies]
+pandas = "^2.0.1"
+python = "^3.10"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.3.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+```
+
+## Create and Deploy Function
+
+Install poetry plugin
+
+If the deployment package is a .zip file archive , then you set the package type to Zip . For a .zip file archive, the code property specifies the location of the .zip file. You must also specify the handler and runtime properties. The code in the deployment package must be compatible with the target instruction set architecture of the function (x86-64 or arm64 ). If you do not specify the architecture, then the default value is x86-64 .
+
+::: {.callout-note}
+If the `.zip` file archive is larger than 50 MB, the dpeloyment package needs to be uploaded to the function from an Amazon S3 bucket. This can done by uploading the .zip archive to S3 and then specifying under the `--code` parameters if the [create-function](https://docs.aws.amazon.com/cli/latest/reference/lambda/create-function.html).
+:::
+
+# References
+
+- [Lambda deployment packages - AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-package.html)
+- [Deploying Lambda functions as .zip file archives - AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-zip.html)
+- [Deploy Python Lambda functions with .zip file archives - AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/python-package.html)
+- [Creating Lambda container images - AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/images-create.html#images-create-from-base)

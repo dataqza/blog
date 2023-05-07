@@ -14,7 +14,7 @@ A top-down approach on how to ‘Marie Kondo’ your data sets into Hadley Wickh
 
 Marie Kondo famously asks us to clean our homes/spaces, discarding things that do not bring us joy and treasuring things that do. Hadley Wickham’s papers shows us how to translate that philosophy into messy datasets, and create ones that instead of bringing panic, bring joy. Tidy data has become the standard format for science and business because it allows people to easily turn a data table into graphs, analysis and insight. 
 
-The purpose of this repository is to help users coming from Excel, to create tidy data sets using Pandas by working through examples that deal with various messy datasets used in Wickham’s paper. Through the process of reading messy data, processing into tidy data and then performing basic analysis, it will also help with general better practice for data management. 
+The purpose of [this repository](https://gitlab.com/dataqza/training/tidy_data_python) is to help users coming from Excel, to create tidy data sets using Pandas by working through examples that deal with various messy datasets used in Wickham’s paper. Through the process of reading messy data, processing into tidy data and then performing basic analysis, it will also help with general better practice for data management. 
 
 The big advantage of Tidy Data is that it makes a clear distinction between a variable, an observation and a value. In this way, all data is standardised which makes it easier to collaborate on. Whether thinking about collaborators as your current colleagues, your future self, or future peers, organising and sharing data in a consistent and predictable way means less adjustment, time, and effort for all. 
 
@@ -215,7 +215,7 @@ df
 
 ## Where to go from here
 
-- Download the repo
+- Download the [repo](https://gitlab.com/dataqza/training/tidy_data_python)
 - Read through Hadley Wickham’s paper on Tidy data. While this post has summarized some of the paper, going through the examples will help you hugely when working through the exercises. 
 - Go through ‘README’ carefully and use the extra resources on pandas as needed.
 - Exercises 1 through to 4b, gradually provide you with less and less scaffolding, work in each notebook to try and create tidy data sets. To check your answers, use the solutions file. 
