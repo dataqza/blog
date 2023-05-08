@@ -2,19 +2,17 @@
 title: "Lambda Zip Deployment with Poetry's Bundle Plugin"
 subtitle: "Using the Bundle to create a Python deployment packages"
 author: "Ian Rogers"
-date: "2023-05-05"
+date: "2023-05-09"
 categories: [Python, Serverless, AWS Lambda]
 ---
 
-AWS Lambda can be used to build and run applications on AWS without having to manage servers. Instead, the developer publishes their code and configures triggers for when AWS should allocate machine resources to run that code. 
+AWS Lambda can be used to build and run Python applications on AWS without having to manage servers. Instead, the developer publishes their code and configures triggers for when AWS should allocate machine resources to run that code. The function code is executed by the [Lambda runtime](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html) which uses the Amazon Linux 2 operating system (with the x86-64 instruction set by default). 
 
-If the code is larger than 3MB, or if your code has depencies that are not part of Python's standard libraries or AWS SDK libraries, you will need deploy your function using a deployment package. Lambda supports two types of deployment packages: container images and .zip file archives. 
+One can use the Lambda console to compose simple functions. However, the code must be less than 3 MB and can only call the standard library or AWS SDK libraries that are included in the runtime. We quickly come up against these limitations when wanting to use third-party libraries such as Pandas. Lambda functions are more practically deployed using a [Lambda deployment package](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-package.html). Here your function code and any dependencies are packaged as a container image or .zip file archive. 
 
-I was looking for a simple way to create .zip archives that integrates well with my development workflow in VSCode. Since I use Poetry to manage dependencies I was happy to find the Bundle plugin  that makes it easy to package the main dependencies for deployment. 
+I was looking for a simple way to deploy .zip archives with the AWS CLI that integrates well with a development workflow that uses Poetry. The [Bundle plugin](https://github.com/python-poetry/poetry-plugin-bundle) makes it very easy to bundle the Poetry package, excluding development dependencies. And since I'm using Ubuntu 22.04 on a x86-64 architecture the package is compatible with the Lambda runtime. 
 
-I outline a minimal example below which you can find as a [GiLab repo](https://gitlab.com/dataqza/tooling/minimal-examples/lambda_zip_deployment).
-
-[Group by: split-apply-combine — pandas 2.0.1 documentation](https://pandas.pydata.org/docs/user_guide/groupby.html#named-aggregation)
+In this post we outline a simple example that uses Pandas as a third-party library and supports testing but only packages the main dependices for deployment. The full exaple can be found at this [GiLab repo](https://gitlab.com/dataqza/tooling/minimal-examples/lambda_zip_deployment).
 
 ::: {.callout-tip}
 Zip file of dependencies can also be published to an AWS Lambda Layer which will be loaded when the function is invoked. Major advantages:
@@ -25,17 +23,14 @@ Zip file of dependencies can also be published to an AWS Lambda Layer which will
 
 # Requirements
 
-You will need the following installed on your workstation
+1. AWS CLI with permissions to create and update Lambda functions
+2. Python3.10
+3. Poetry
+5. ARN for an execution role that will give your function permission to access AWS resources ([Using Lambda with the AWS CLI - AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-awscli.html)
 
-- AWS CLI with permission ti create and update Lambda functions
-- VSCode
-- Poetry
-- ARN for an AWS Role that gives your function permission to access AWS resources ([Using Lambda with the AWS CLI - AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-awscli.html)
+# Python project
 
-
-## Python project in VSCode
-
-The project has the following structure
+For this example we are implementing the named aggregation example given in the Pandas User Guide ([Group by: split-apply-combine](https://pandas.pydata.org/docs/user_guide/groupby.html#named-aggregation)). The project has the following structure
 
 ```txt
 ./
@@ -43,13 +38,17 @@ The project has the following structure
 │   ├── main.py
 │   └── transform.py
 ├── tests/
+│   ├── data/
+│   │   └── animals.json
+│   ├── test_handler.py
 │   └── test_transform.py
+├── lambda.sh*
 ├── poetry.lock
 ├── pyproject.toml
 └── README.md
 ```
 
-Our poetry configuration includes some third-party libraries: pandas and pydantic as main dependecies, and pytest as a development dependency.
+Our Poetry configuration includes some third-party libraries: pandas as a main dependecies, and pytest as a development dependency.
 
 ```toml
 [tool.poetry]
@@ -72,14 +71,136 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 ```
 
-## Create and Deploy Function
+The logic is a simple aggregation in `transform.py` 
 
-Install poetry plugin
+```python
+import pandas as pd
 
-If the deployment package is a .zip file archive , then you set the package type to Zip . For a .zip file archive, the code property specifies the location of the .zip file. You must also specify the handler and runtime properties. The code in the deployment package must be compatible with the target instruction set architecture of the function (x86-64 or arm64 ). If you do not specify the architecture, then the default value is x86-64 .
+
+def aggregate(animals: pd.DataFrame) -> pd.DataFrame:
+    return animals.groupby("kind").agg(
+        min_height=pd.NamedAgg(column="height", aggfunc="min"),
+        max_height=pd.NamedAgg(column="height", aggfunc="max"),
+        average_weight=pd.NamedAgg(column="weight", aggfunc="mean"),
+    )
+```
+
+The functionality is tested by a single test in `test_transform.py`
+
+```python
+import pandas as pd
+import pytest
+
+from lambda_zip_deployment.transform import aggregate
+
+
+def test_aggregation():
+    animals = pd.DataFrame(
+        {
+            "kind": ["cat", "dog", "cat", "dog"],
+            "height": [9.1, 6.0, 9.5, 34.0],
+            "weight": [7.9, 7.5, 9.9, 198.0],
+        }
+    )
+
+    result = aggregate(animals)
+    assert result.at["dog", "average_weight"] == pytest.approx(102.75, 0.01)
+
+```
+
+The Lambda handler (`main.py`) is responsible for receiving the input, calling the transformation and returning the result.
+
+```python
+import json
+
+import pandas as pd
+
+from lambda_zip_deployment.transform import aggregate
+
+
+def handler(event, context):
+    df_animals = pd.DataFrame(event["data"])
+    df_result = aggregate(df_animals)
+    return json.loads(df_result.to_json())
+```
+
+# Setup
+
+Use Poetry to install the project, and then run tests
+
+```sh
+$ poetry config virtualenvs.in-project true
+$ poetry install
+
+(lambda-zip-deployment-py3.10)$ pytest
+```
+
+```
+============================ test session starts =============================
+platform linux -- Python 3.10.6, pytest-7.3.1, pluggy-1.0.0
+rootdir: /home/ian/Documents/dataq/tooling/lambda_zip_deployment
+collected 2 items                                                            
+
+tests/test_handler.py .                                                [ 50%]
+tests/test_transform.py .                                              [100%]
+
+============================= 2 passed in 0.42s ==============================
+```
+
+# Packaging and Deploying the Function
+
+Install the [Bundle plugin](https://github.com/python-poetry/poetry-plugin-bundle#installation). The easiest way to install the bundle plugin is via the self add command of Poetry.
+
+```sh
+poetry self add poetry-plugin-bundle
+```
+
+Then we can simple Package
+
+```sh
+PROJECT_PATH="$PWD/$FUNCTION_NAME"
+BUNDLE_PATH="$PWD/dist/$FUNCTION_NAME"
+
+poetry bundle venv dist/lambda_zip_deployment  \
+    --python python3.10 \
+    --clear \
+    --only main \
+    --directory lambda_zip_deployment 
+```
+
+Create the .zip archive
+
+```
+cd  dist/lambda_zip_deployment/lib/python*/site-packages/
+zip -r "dist/lambda_zip_deployment.zip" .
+```
+
+Deploy the .zip archive by creating the functionspecifying the location of the .zip file as well as the handler and runtime properties.
+
+```sh
+aws lambda create-function \
+    --function-name lambda-zip-deployment \
+    --zip-file fileb://dist/lambda_zip_deployment.zip \
+    --handler lambda_zip_deployment.main.handler \
+    --runtime python3.10 \
+    --role $ROLE_ARN
+```
+
+Test
+
+```sh
+aws lambda invoke \
+    --function-name $FUNCTION_NAME \
+    --cli-binary-format raw-in-base64-out \
+    --payload file://tests/data/animals.json test_response.json
+```
+
+We can make changes, package and depoy. Have added `lambda.sh` script
 
 ::: {.callout-note}
-If the `.zip` file archive is larger than 50 MB, the dpeloyment package needs to be uploaded to the function from an Amazon S3 bucket. This can done by uploading the .zip archive to S3 and then specifying under the `--code` parameters if the [create-function](https://docs.aws.amazon.com/cli/latest/reference/lambda/create-function.html).
+The size of our package with numpy and pandas is 33 MB. If the `.zip` file archive is larger than 50 MB, the dpeloyment package needs to be uploaded to the function from an Amazon S3 bucket. This can done by uploading the .zip archive to S3 and then specifying the connection details under the `--code` parameters of the [create-function](https://docs.aws.amazon.com/cli/latest/reference/lambda/create-function.html). 
+
+Using the layers is useful
 :::
 
 # References
